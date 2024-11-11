@@ -51,7 +51,7 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
                         dist.amostras[:, v], valores_vizinhanca
                     )
 
-                    if delta_n >= non_d and delta_n > melhor_delta:
+                    if delta_n >= non_d / 2 and delta_n > melhor_delta:
                         melhor_delta = delta_n
                         melhor_vizinho = vizinho
 

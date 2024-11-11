@@ -1,7 +1,6 @@
 import random
 from typing import List
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class Grafo:
@@ -101,7 +100,7 @@ class Grafo:
 
         Gera um grafo diamante
         """
-        self.vertices = list(range(32))
+        self.vertices = list(range(6))
 
         for v in self.vertices[1:-1]:
             self.arestas.extend([(0, v), (v, self.vertices[-1])])
@@ -111,10 +110,10 @@ class Grafo:
     def get_grafo_grid(self):
         """get_grafo_grid
 
-        Gera um grafo de malha quadriculada 6x6 já como modelo de Ising
+        Gera um grafo de malha quadriculada 4x4 já como modelo de Ising
         """
-        linhas = 6
-        colunas = 6
+        linhas = 4
+        colunas = 4
 
         self.vertices = list(range(linhas * colunas))
         self.valores = [random.choice([1, -1]) for _ in range(len(self.vertices))]
