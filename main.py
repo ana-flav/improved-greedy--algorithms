@@ -52,6 +52,7 @@ def greedy_algorithm(samples, epsilon):
                     if delta_j >= epsilon and delta_j > best_delta:
                         best_delta = delta_j
                         best_node = j
+
             if best_node is not None:
                 neighbors[i].add(best_node)
                 current_cond_entropy -= best_delta

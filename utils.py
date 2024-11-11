@@ -117,27 +117,39 @@ class Grafo:
 
         self.vertices = list(range(linhas * colunas))
         self.valores = [random.choice([1, -1]) for _ in range(len(self.vertices))]
-        valores = self.valores
+        valores = self.valores.copy()
 
         for v in self.vertices:
             somatorio = 0
             if v % colunas > 0:
-                self.arestas.append((v, v - 1))
+                aresta = (v, v - 1)
+                if aresta not in self.arestas or (v - 1, v) not in self.arestas:
+                    self.arestas.append(aresta)
+
                 peso = self.__get_peso_aleatorio()
                 somatorio += (peso) * self.valores[v - 1]
 
             if v % colunas < colunas - 1:
-                self.arestas.append((v, v + 1))
+                aresta = (v, v + 1)
+                if aresta not in self.arestas or (v + 1, v) not in self.arestas:
+                    self.arestas.append(aresta)
+
                 peso = self.__get_peso_aleatorio()
                 somatorio += (peso) * self.valores[v + 1]
 
             if v >= colunas:
-                self.arestas.append((v, v - colunas))
+                aresta = (v, v - colunas)
+                if aresta not in self.arestas or (v - colunas, v) not in self.arestas:
+                    self.arestas.append(aresta)
+
                 peso = self.__get_peso_aleatorio()
                 somatorio += (peso) * self.valores[v - colunas]
 
             if v < (linhas - 1) * colunas:
-                self.arestas.append((v, v + colunas))
+                aresta = (v, v + colunas)
+                if aresta not in self.arestas or (v + colunas, v) not in self.arestas:
+                    self.arestas.append((v, v + colunas))
+
                 peso = self.__get_peso_aleatorio()
                 somatorio += (peso) * self.valores[v + colunas]
 
