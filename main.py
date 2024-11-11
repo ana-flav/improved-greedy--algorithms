@@ -33,6 +33,8 @@ def ising_gibbs_sample(n, m, theta, num_samples=1000):
             samples[sample_idx, i] = 1 if random.random() < prob else -1
     return samples
 
+
+
 def greedy_algorithm(samples, epsilon):
     n_samples, n_variables = samples.shape
     neighbors = {}
