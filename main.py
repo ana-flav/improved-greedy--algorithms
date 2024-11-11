@@ -137,6 +137,7 @@ def greedy_p_algorithm(samples, epsilon):
 def rwl_algorithm(samples, lambda_value):
     neighbors = {}  
     return neighbors
+
 def simulate_results_plot():
     sample_sizes = [500, 1000, 2000, 3000, 4000, 5000]
     probability_of_success_diamond = {
@@ -171,5 +172,6 @@ def simulate_results_plot():
     
     plt.tight_layout()
     plt.show()
-# simulate_results_plot()
 
+samples = ising_gibbs_sample(4, 4, 0.5)
+print(greedy_algorithm(samples, 0.04))

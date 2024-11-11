@@ -45,6 +45,57 @@ def conditional_entropy(x, y):
     return cond_ent
 
 
+def calculate_conditional_entropy_ising(
+    target_var: np.ndarray, conditioning_vars: np.ndarray
+) -> float:
+    """
+    Calculate conditional entropy for Ising model variables.
+
+    Args:
+        samples: Array of samples
+        target_var: Target variable values
+        conditioning_vars: Conditioning variables values
+
+    Returns:
+        Conditional entropy value
+    """
+    if conditioning_vars.size == 0:
+        # If no conditioning variables, return marginal entropy
+        hist, _ = np.histogram(target_var, bins=[-np.inf, 0, np.inf])
+        hist = hist / len(target_var)
+        return entropy(hist, base=2)
+
+    # For Ising model, we need to consider the joint states
+    if conditioning_vars.ndim == 1:
+        conditioning_vars = conditioning_vars.reshape(-1, 1)
+
+    # Create unique states for conditioning variables
+    unique_states = np.unique(conditioning_vars, axis=0)
+
+    cond_entropy = 0
+    for state in unique_states:
+        # Find samples matching this configuration
+        if conditioning_vars.shape[1] == 1:
+            mask = conditioning_vars.flatten() == state
+        else:
+            mask = np.all(conditioning_vars == state, axis=1)
+
+        # Calculate conditional probability
+        p_state = np.mean(mask)
+
+        # Get target variable values for this configuration
+        target_given_state = target_var[mask]
+
+        # Calculate entropy for this configuration
+        if len(target_given_state) > 0:
+            hist, _ = np.histogram(target_given_state, bins=[-np.inf, 0, np.inf])
+            hist = hist / len(target_given_state)
+            if np.any(hist > 0):  # Avoid log(0)
+                cond_entropy += p_state * entropy(hist, base=2)
+
+    return cond_entropy
+
+
 def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
     """greed_algorithm
 
@@ -60,9 +111,11 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
     for v in variaveis:
         vizinhanca[v] = set()
         v_aleatorio = dist.amostras[:, v]
-        entropia_atual = entropy(
-            np.histogram(v_aleatorio, bins=len(np.unique(v_aleatorio)))[0], base=2
-        )
+        # entropia_atual = entropy(
+        #     np.histogram(v_aleatorio, bins=len(np.unique(v_aleatorio)))[0], base=2
+        # )
+
+        entropia_atual = calculate_conditional_entropy_ising(v_aleatorio, np.array([]))
 
         while True:
             melhor_delta = -np.inf
@@ -74,9 +127,11 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
                         dist.amostras[:, list(vizinhanca[v]) + [vizinho]], axis=1
                     )
 
-                    delta_n = entropia_atual - conditional_entropy(
-                        dist.amostras[:, v], valores_vizinhanca
+                    nova_entropia = calculate_conditional_entropy_ising(
+                        v_aleatorio, valores_vizinhanca
                     )
+
+                    delta_n = entropia_atual - nova_entropia
 
                     if delta_n >= non_d / 2 and delta_n > melhor_delta:
                         print("cai aqui")
