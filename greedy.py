@@ -75,10 +75,7 @@ def calculate_conditional_entropy_ising(
     cond_entropy = 0
     for state in unique_states:
         # Find samples matching this configuration
-        if conditioning_vars.shape[1] == 1:
-            mask = conditioning_vars.flatten() == state
-        else:
-            mask = np.all(conditioning_vars == state, axis=1)
+        mask = conditioning_vars.flatten() == state
 
         # Calculate conditional probability
         p_state = np.mean(mask)
@@ -90,7 +87,7 @@ def calculate_conditional_entropy_ising(
         if len(target_given_state) > 0:
             hist, _ = np.histogram(target_given_state, bins=[-np.inf, 0, np.inf])
             hist = hist / len(target_given_state)
-            if np.any(hist > 0):  # Avoid log(0)
+            if np.any(hist > 0):  
                 cond_entropy += p_state * entropy(hist, base=2)
 
     return cond_entropy
@@ -123,9 +120,7 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
 
             for vizinho in variaveis:
                 if v != vizinho and vizinho not in vizinhanca[v]:
-                    valores_vizinhanca = np.mean(
-                        dist.amostras[:, list(vizinhanca[v]) + [vizinho]], axis=1
-                    )
+                    valores_vizinhanca = dist.amostras[:, vizinho]
 
                     nova_entropia = calculate_conditional_entropy_ising(
                         v_aleatorio, valores_vizinhanca
@@ -134,12 +129,10 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
                     delta_n = entropia_atual - nova_entropia
 
                     if delta_n >= non_d / 2 and delta_n > melhor_delta:
-                        print("cai aqui")
                         melhor_delta = delta_n
                         melhor_vizinho = vizinho
 
             if melhor_vizinho is None:
-                print("break")
                 break
 
             vizinhanca[v].add(melhor_vizinho)
