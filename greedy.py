@@ -134,12 +134,12 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
                     delta_n = entropia_atual - nova_entropia
 
                     if delta_n >= non_d / 2 and delta_n > melhor_delta:
-                        print("cai aqui")
+            
                         melhor_delta = delta_n
                         melhor_vizinho = vizinho
 
             if melhor_vizinho is None:
-                print("break")
+            
                 break
 
             vizinhanca[v].add(melhor_vizinho)
