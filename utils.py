@@ -22,7 +22,8 @@ class Grafo:
         for no, vizinhanca in adjacencia.items():
             for vizinho in vizinhanca:
                 aresta = (no, vizinho)
-                if aresta not in arestas:
+                aresta_reversa = aresta[::-1]
+                if aresta not in arestas and aresta_reversa not in arestas:
                     arestas.append(aresta)
 
         return arestas
@@ -123,38 +124,37 @@ class Grafo:
             somatorio = 0
             if v % colunas > 0:
                 aresta = (v, v - 1)
-                if aresta not in self.arestas or (v - 1, v) not in self.arestas:
+                if aresta not in self.arestas and (v - 1, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = self.__get_peso_aleatorio()
+                peso = 0.25 if self.valores[v] == self.valores[v - 1] else -0.25
                 somatorio += (peso) * self.valores[v - 1]
 
             if v % colunas < colunas - 1:
                 aresta = (v, v + 1)
-                if aresta not in self.arestas or (v + 1, v) not in self.arestas:
+                if aresta not in self.arestas and (v + 1, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = self.__get_peso_aleatorio()
+                peso = 0.25 if self.valores[v] == self.valores[v + 1] else -0.25
                 somatorio += (peso) * self.valores[v + 1]
 
             if v >= colunas:
                 aresta = (v, v - colunas)
-                if aresta not in self.arestas or (v - colunas, v) not in self.arestas:
+                if aresta not in self.arestas and (v - colunas, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = self.__get_peso_aleatorio()
+                peso = 0.25 if self.valores[v] == self.valores[v - colunas] else -0.25
                 somatorio += (peso) * self.valores[v - colunas]
 
             if v < (linhas - 1) * colunas:
                 aresta = (v, v + colunas)
-                if aresta not in self.arestas or (v + colunas, v) not in self.arestas:
-                    self.arestas.append((v, v + colunas))
+                if aresta not in self.arestas and (v + colunas, v) not in self.arestas:
+                    self.arestas.append(aresta)
 
-                peso = self.__get_peso_aleatorio()
+                peso = 0.25 if self.valores[v] == self.valores[v + colunas] else -0.25
                 somatorio += (peso) * self.valores[v + colunas]
 
             prob = 1 / (1 + np.exp(-2 * somatorio))
-
             valores[v] = 1 if random.random() < prob else -1
 
         self.valores = valores
