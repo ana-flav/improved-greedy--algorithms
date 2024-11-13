@@ -1,9 +1,8 @@
-import numpy as np
 import networkx as nx
-from greedy import greedy_algorithm_meu, greedy_anaflavia
+from greedy import greedy
 from utils import Distribuicao, Grafo
 import matplotlib.pyplot as plt
-
+from pprint import pprint
 
 def plotar_grafo(vertices, arestas):
     G = nx.Graph()
@@ -25,14 +24,14 @@ def plotar_grafo(vertices, arestas):
     plt.show()
 
 
-dist_d = Distribuicao(tipo="grid", num_amostras=1000)
+dist_d = Distribuicao(tipo="grid", num_amostras=10000)
 
 
-vizinhanca = greedy_anaflavia(dist_d, 0.01)
+vizinhanca = greedy(dist_d, 0.0004)
 grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
 
 
-print(grafo.__dict__)
+pprint(grafo.__dict__)
 # mean = np.mean(dist_d.amostras, axis=1)
 
 # plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
@@ -40,7 +39,7 @@ print(grafo.__dict__)
 
 # dist_d = Distribuicao(tipo="grid", num_amostras=1)
 # grafo = dist_d._grafos[0]
-# plotar_grafo(grafo.vertices, grafo.arestas)
+plotar_grafo(grafo.vertices, grafo.arestas)
 # print(grafo.__dict__)
 
 # Parâmetros e configuração
