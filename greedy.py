@@ -1,53 +1,100 @@
+from collections import Counter
+import math
 import numpy as np
 from utils import Distribuicao
 from scipy.stats import entropy
 
 
-def cond_entropy(target_var: np.ndarray, conditioning_vars: np.ndarray) -> float:
-    """
-    Calculate conditional entropy for Ising model variables.
+def joint_entropy(*vars):
+    hist, _ = np.histogramdd(vars, bins=[np.unique(var).size for var in vars])
+    hist = hist / hist.sum()
+    hist = hist.flatten()
 
-    Args:
-        samples: Array of samples
-        target_var: Target variable values
-        conditioning_vars: Conditioning variables values
+    hist = hist[hist != 0]
 
-    Returns:
-        Conditional entropy value
-    """
-    if conditioning_vars.size == 0:
-        hist, _ = np.histogram(target_var, bins=[-np.inf, 0, np.inf])
-        hist = hist / len(target_var)
-        return entropy(hist, base=2)
+    return -np.sum(hist * np.log2(hist))
 
-    if conditioning_vars.ndim == 1:
-        conditioning_vars = conditioning_vars.reshape(-1, 1)
 
-    unique_states = np.unique(conditioning_vars, axis=0)
+def empirical_cond_entropy(target: np.ndarray, conditioning_set: list[np.ndarray] = []):
+    if len(conditioning_set) == 0:
+        count = Counter(target)
+        n = len(target)
 
-    cond_entropy = 0
-    for state in unique_states:
-        mask = conditioning_vars.flatten() == state
+        prob = [count[val] / n for val in count]
+        return -sum(p * math.log2(p) for p in prob if p > 0)
 
-        p_state = np.mean(mask)
-        target_given_state = target_var[mask]
+    ent_1 = empirical_joint_entropy(target, *conditioning_set)
+    ent_2 = empirical_joint_entropy(*conditioning_set)
 
-        if len(target_given_state) > 0:
-            hist, _ = np.histogram(target_given_state, bins=[-np.inf, 0, np.inf])
-            hist = hist / len(target_given_state)
-            if np.any(hist > 0):
-                cond_entropy += p_state * entropy(hist, base=2)
+    return ent_1 - ent_2
 
-    return cond_entropy
+
+def empirical_joint_entropy(*vars):
+    tuples = []
+    n = len(vars[0])
+    for i in range(len(vars[0])):
+        pairs = ()
+        for j in range(len(vars)):
+            pairs += (int(vars[j][i]),)
+        tuples.append(pairs)
+
+    pair_counts = Counter(tuples)
+
+    j_e = 0
+    for count in pair_counts.values():
+        p_xy = count / n
+        j_e -= p_xy * math.log2(p_xy)
+
+    return j_e
+
+
+def _get_tuples_from_arrays(*vars):
+    tuples = []
+    for i in range(len(vars[0])):
+        pairs = ()
+        for j in range(len(vars)):
+            pairs += (int(vars[j][i]),)
+        tuples.append(pairs)
+
+    return tuples
+
+
+def empirical_cond_entropy(target, cond_vars=[]):
+    if len(cond_vars) == 0:
+        count = Counter(target)
+        n = len(target)
+
+        prob = [count[val] / n for val in count]
+        return -sum(p * math.log2(p) for p in prob if p > 0)
+
+    n = len(target)
+    data = _get_tuples_from_arrays(target, *cond_vars)
+    data_cond = _get_tuples_from_arrays(*cond_vars)
+
+    count_1 = Counter(data)
+    count_2 = Counter(data_cond)
+
+    cond_ent = 0
+    for items, count in count_1.items():
+        p_1 = count / n
+        p_2 = count_2[tuple(x for x in items[1:])] / n
+        cond_ent -= p_1 * math.log2(p_1 / p_2)
+
+    return cond_ent
 
 
 def _encontra_menor_cond_ent(dist, x, dist_x, vizinhanca_x, variaveis):
     melhor_vizinho = None
     menor_ent = 1
 
+    nb = [dist.amostras[:, t] for t in list(vizinhanca_x)]
+
     for vizinho in variaveis:
-        if x != vizinho and vizinho not in vizinhanca_x:
-            entropia = cond_entropy(dist_x, dist.amostras[:, vizinho])
+        if x != vizinho and vizinho not in list(vizinhanca_x):
+            nb_c = nb.copy()
+            nb_c.append(dist.amostras[:, vizinho])
+
+            entropia = empirical_cond_entropy(dist_x, nb_c)
             if entropia <= menor_ent:
                 menor_ent = entropia
                 melhor_vizinho = vizinho
@@ -70,29 +117,21 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
     for v in variaveis:
         vizinhanca[v] = set()
         v_aleatorio = dist.amostras[:, v]
-        entropia_atual = cond_entropy(v_aleatorio, np.array([]))
+        entropia_atual = empirical_cond_entropy(v_aleatorio)
 
-        while True:
-            melhor_delta = -np.inf
-            melhor_vizinho = None
-
-            talvez_melhor_vizinho, melhor_entropia = _encontra_menor_cond_ent(
+        while True and len(vizinhanca[v]) < 10:
+            candidato, menor_entropia = _encontra_menor_cond_ent(
                 dist, v, v_aleatorio, vizinhanca[v], variaveis
             )
-            delta_n = entropia_atual - melhor_entropia
 
-            if melhor_entropia < (entropia_atual - non_d / 2):
-                print(f"entropia obtida: {melhor_entropia}")
-                print(
-                    f"analisando {v} e {talvez_melhor_vizinho},\n delta_n -- {delta_n}"
-                )
-                melhor_delta = delta_n
-                melhor_vizinho = talvez_melhor_vizinho
-
-            if melhor_vizinho is None:
+            if menor_entropia > (entropia_atual - non_d / 2):
                 break
 
-            vizinhanca[v].add(melhor_vizinho)
-            entropia_atual -= melhor_delta
+            delta = entropia_atual - menor_entropia
+            print(
+                f"({v}, {candidato}) | entropia: {menor_entropia}, atual: {entropia_atual}, delta: {delta} \n {menor_entropia < (entropia_atual - non_d / 2)}"
+            )
+            vizinhanca[v].add(candidato)
+            entropia_atual = entropia_atual - delta
 
     return vizinhanca

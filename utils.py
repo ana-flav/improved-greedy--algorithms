@@ -85,7 +85,7 @@ class Grafo:
         grafo.valores = valores
         return grafo
 
-    def __get_peso_aleatorio(self) -> float:
+    def __get_peso(self, aresta) -> float:
         """__get_peso_aleatorio
 
         Método auxiliar que escolhe aleatoriamente peso 0.25 ou -0.25
@@ -94,7 +94,7 @@ class Grafo:
         Returns:
             float: Peso aleatoriamente atribuído
         """
-        return 0.25 if random.random() > 0.5 else -0.25
+        return 0.25 if self.valores[aresta[0]] == self.valores[aresta[1]] else -0.25
 
     def get_grafo_diamante(self):
         """get_grafo_diamante
@@ -127,32 +127,28 @@ class Grafo:
                 if aresta not in self.arestas and (v - 1, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = 0.25 if self.valores[v] == self.valores[v - 1] else -0.25
-                somatorio += (peso) * self.valores[v - 1]
+                somatorio += (self.__get_peso(aresta)) * self.valores[v - 1]
 
             if v % colunas < colunas - 1:
                 aresta = (v, v + 1)
                 if aresta not in self.arestas and (v + 1, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = 0.25 if self.valores[v] == self.valores[v + 1] else -0.25
-                somatorio += (peso) * self.valores[v + 1]
+                somatorio += (self.__get_peso(aresta)) * self.valores[v + 1]
 
             if v >= colunas:
                 aresta = (v, v - colunas)
                 if aresta not in self.arestas and (v - colunas, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = 0.25 if self.valores[v] == self.valores[v - colunas] else -0.25
-                somatorio += (peso) * self.valores[v - colunas]
+                somatorio += (self.__get_peso(aresta)) * self.valores[v - colunas]
 
             if v < (linhas - 1) * colunas:
                 aresta = (v, v + colunas)
                 if aresta not in self.arestas and (v + colunas, v) not in self.arestas:
                     self.arestas.append(aresta)
 
-                peso = 0.25 if self.valores[v] == self.valores[v + colunas] else -0.25
-                somatorio += (peso) * self.valores[v + colunas]
+                somatorio += (self.__get_peso(aresta)) * self.valores[v + colunas]
 
             prob = 1 / (1 + np.exp(-2 * somatorio))
             valores[v] = 1 if random.random() < prob else -1

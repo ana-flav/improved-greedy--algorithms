@@ -1,7 +1,6 @@
 import numpy as np
 import networkx as nx
 from greedy import greedy_algorithm_meu
-from teste import cross_validate_non_d
 from utils import Distribuicao, Grafo
 import matplotlib.pyplot as plt
 
@@ -25,17 +24,19 @@ def plotar_grafo(vertices, arestas):
 
     plt.show()
 
+
 dist_d = Distribuicao(tipo="grid", num_amostras=1000)
+
+
+vizinhanca = greedy_algorithm_meu(dist_d, 0.01)
+grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+
+
+print(grafo.__dict__)
 # mean = np.mean(dist_d.amostras, axis=1)
 
 # plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
 # plt.show()
-
-# for epsilon in [0.04, 0.02, 0.01, 0.014, 0.009, 0.008, 0.006, 0.003]:
-vizinhanca = greedy_algorithm_meu(dist_d, 0.004)
-grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-
-print(grafo.__dict__)
 
 # dist_d = Distribuicao(tipo="grid", num_amostras=1)
 # grafo = dist_d._grafos[0]
@@ -62,4 +63,3 @@ print(grafo.__dict__)
 # vizinhanca = greedy_algorithm_meu(dist_d, 0.0001)
 # mrf = Grafo.get_instance_from_vizinhanca(vizinhanca)
 # print("Vizinhança encontrada:", mrf.__dict__)
-

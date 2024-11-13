@@ -176,4 +176,4 @@ def simulate_results_plot():
     plt.show()
 
 samples = ising_gibbs_sample(4, 4, 0.5)
-print(greedy_algorithm(samples, 0.04))
+print(greedy_algorithm(samples, 0.06))
