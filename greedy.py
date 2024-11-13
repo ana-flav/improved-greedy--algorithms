@@ -101,38 +101,41 @@ def _encontra_menor_cond_ent(dist, x, dist_x, vizinhanca_x, variaveis):
 
     return melhor_vizinho, menor_ent
 
+
 def empirical_conditional_entropy(target, cond_set):
-    """
-    Calcula a entropia condicional empírica de uma variável aleatória `target` 
-    dado um conjunto de variáveis aleatórias `cond_set`.
-    
-    Parâmetros:
-    - target (np.ndarray): Array 1D representando a variável alvo.
-    - cond_set (list of np.ndarray): Lista de arrays 1D representando as variáveis condicionantes.
-    
-    Retorna:
-    - float: Entropia condicional H(target | cond_set)
-    """
+    if len(cond_set) == 0:
+        count = Counter(target)
+        n = len(target)
+
+        prob = [count[val] / n for val in count]
+        return -sum(p * math.log2(p) for p in prob if p > 0)
+
     # Transforma cond_set em uma matriz, onde cada linha é uma realização das variáveis em cond_set
     cond_matrix = np.vstack(cond_set).T
-    
+
     # Junta target com cond_set para formar a distribuição conjunta
     joint_data = np.column_stack((target, cond_matrix))
-    
+
     # Contar as frequências para a distribuição conjunta (target, cond_set)
     joint_counts = Counter(map(tuple, joint_data))
     joint_total = sum(joint_counts.values())
-    
+
     # Entropia conjunta H(target, cond_set)
-    H_joint = -sum((count / joint_total) * np.log2(count / joint_total) for count in joint_counts.values())
-    
+    H_joint = -sum(
+        (count / joint_total) * np.log2(count / joint_total)
+        for count in joint_counts.values()
+    )
+
     # Contar as frequências para a distribuição marginal cond_set
     cond_counts = Counter(map(tuple, cond_matrix))
     cond_total = sum(cond_counts.values())
-    
+
     # Entropia marginal H(cond_set)
-    H_cond = -sum((count / cond_total) * np.log2(count / cond_total) for count in cond_counts.values())
-    
+    H_cond = -sum(
+        (count / cond_total) * np.log2(count / cond_total)
+        for count in cond_counts.values()
+    )
+
     # Entropia condicional H(target | cond_set)
     H_conditional = H_joint - H_cond
     return H_conditional
@@ -173,35 +176,44 @@ def greedy_algorithm_meu(dist: Distribuicao, non_d: float):
     return vizinhanca
 
 
+def get_min_j(
+    i: int, variaveis: list, dist: Distribuicao, vizinhanca_i: list, non_d: float
+):
+    melhor_candidato = None
+    menor_entropia = np.inf
+
+    for j in variaveis:
+        if j != i and j not in vizinhanca_i:
+            entropia_j = empirical_conditional_entropy(
+                dist.amostras[:, i],
+                [dist.amostras[:, v] for v in vizinhanca_i] + [dist.amostras[:, j]],
+            )
+
+            if entropia_j <= menor_entropia:
+                melhor_candidato = j
+                menor_entropia = entropia_j
+
+    return melhor_candidato, menor_entropia
+
+
 def greedy_anaflavia(dist: Distribuicao, non_d: float):
     variaveis = list(range(dist.tamanho))
     vizinhanca = {}
 
     for i in variaveis:
         vizinhanca[i] = set()
-        entropia_atual = empirical_cond_entropy(dist.amostras[:, i])
 
         while True:
-            melhor_delta = -np.inf
-            melhor_candidato = None
+            entropia_atual = empirical_cond_entropy(
+                dist.amostras[:, i], [dist.amostras[:, v] for v in vizinhanca[i]]
+            )
+            melhor_candidato, menor_entropia = get_min_j(
+                i, variaveis, dist, vizinhanca[i], non_d
+            )
 
-            for j in variaveis:
-                if j != i and j not in vizinhanca[i]:
-                    entropia_j = empirical_conditional_entropy(
-                        dist.amostras[:, i],
-                        [dist.amostras[:, v] for v in vizinhanca[i]]
-                        + [dist.amostras[:, j]],
-                    )
-
-                    delta = entropia_atual - entropia_j
-                    if delta >= non_d / 2 and delta > melhor_delta:
-                        melhor_delta = delta
-                        melhor_candidato = j
-
-            if melhor_candidato is not None:
-                vizinhanca[i].add(melhor_candidato)
-                entropia_atual -= melhor_delta
-            else:
+            if not menor_entropia < entropia_atual - non_d / 2:
                 break
+
+            vizinhanca[i].add(melhor_candidato)
 
     return vizinhanca
