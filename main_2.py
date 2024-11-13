@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-from greedy import greedy_algorithm_meu
+from greedy import greedy_algorithm_meu, greedy_anaflavia
 from utils import Distribuicao, Grafo
 import matplotlib.pyplot as plt
 
@@ -28,7 +28,7 @@ def plotar_grafo(vertices, arestas):
 dist_d = Distribuicao(tipo="grid", num_amostras=1000)
 
 
-vizinhanca = greedy_algorithm_meu(dist_d, 0.01)
+vizinhanca = greedy_anaflavia(dist_d, 0.01)
 grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
 
 
