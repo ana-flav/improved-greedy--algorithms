@@ -5,14 +5,14 @@ from sample import Distribuicao
 
 def rec_greedy(dist: Distribuicao, epsilon: float):
     variaveis = list(range(dist.tamanho))
-    vizinhanca = {i: set() for i in variaveis}  # Inicializar a vizinhança estimada N̂(i)
+    vizinhanca = {i: set() for i in variaveis}  
 
     for i in variaveis:
-        N_i = set()  # N̂(i) - Conjunto de vizinhança estimada para o nó i
+        N_i = set()  
         iterate = True
 
         while iterate:
-            T_i = N_i.copy()  # T̂(i) começa com o valor atual de N̂(i)
+            T_i = N_i.copy() 
             last = None
             complete = False
 

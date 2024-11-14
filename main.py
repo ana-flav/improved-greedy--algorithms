@@ -181,7 +181,7 @@ def tempo_execucao():
                 vizinhanca = alg(**args)
                 tempo_exec = datetime.now() - inicio_tempo
                 grado = Grafo.get_instance_from_vizinhanca(vizinhanca)
-                print("morte")
+        
                 if grado.arestas:
                     break
 
@@ -233,7 +233,23 @@ def tet():
                 sucesso += valida_grade(grafo)
                 break
 
+# num = 5000
+# epsilon = 0.002
+# sucesso = 0
+# print(num, epsilon)
+# for i in range(100):
+#     print(i)
 
+#     tentativas = 1
+#     while True:
+#         print("tentando dnv")
+#         dist_d = Distribuicao(tipo="grid", num_amostras=num)
+#         vizinhanca = greedy(dist_d, epsilon)
+#         grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+#         if grafo.arestas:
+#             sucesso += valida_grade(grafo)
+#             break
+        
 def plotar_tempos_execucao():
     tempos = tempo_execucao()
     df_tempos = pd.DataFrame(tempos)
