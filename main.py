@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import pickle
 import networkx as nx
+import numpy as np
 from algorithms.greedy import greedy
 from algorithms.greedy_fb import greedy_fb
 from algorithms.greedy_p import greedyP
@@ -32,6 +33,8 @@ def plotar_grafo(vertices, arestas):
 
 
 def valida_diamante(grafo):
+    if not grafo.arestas:
+        return 0
     if (0, 5) in grafo.arestas or (5, 0) in grafo.arestas:
         return 0
     return 1
@@ -74,15 +77,10 @@ def get_resultado_grade():
         2000: 0.008,
         3000: 0.005,
         4000: 0.06,
-        5000: 0.08,
-        6000: 0.08,
-        7000: 0.08,
-        8000: 0.08,
-        9000: 0.08,
-        10000: 0.08,
+        5000: 0.002,
     }
 
-    for num_amostras in range(1000, 11000, 1000):
+    for num_amostras in range(1000, 6000, 1000):
         print(num_amostras)
         for _ in range(100):
             dist_d = Distribuicao(tipo="grid", num_amostras=num_amostras)
@@ -163,16 +161,17 @@ def read_resultados_diamante():
 # read_resultados_diamante()
 
 num = 5000
-epsilon = 0.0009
+epsilon = 0.002
 sucesso = 0
 print(num, epsilon)
 for i in range(100):
     print(i)
 
+    tentativas = 1
     while True:
-        print('tentando dnv')
+        print("tentando dnv")
         dist_d = Distribuicao(tipo="grid", num_amostras=num)
-        vizinhanca = greedy_fb(dist_d, epsilon, 0.9)
+        vizinhanca = greedy(dist_d, epsilon)
         grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
         if grafo.arestas:
             sucesso += valida_grade(grafo)
@@ -181,7 +180,42 @@ for i in range(100):
 print(num, epsilon)
 print(sucesso / 100)
 
-# dist_d = Distribuicao(tipo="grid", num_amostras=2000)
+# resultados = {
+#     "greedy": {},
+#     "rec_greedy": {},
+#     "greedy_fb": {},
+#     "greedyP": {},
+# }
+
+
+def get_algoritmo(dist, epsilon):
+    return {
+        0: (greedy, {"dist": dist, "non_d": epsilon}),
+        1: (rec_greedy, {"dist": dist, "epsilon": epsilon}),
+        2: (greedy_fb, {"dist": dist, "non_d": epsilon, "alpha": 0.9}),
+        3: (greedyP, {"dist": dist, "epsilon": epsilon}),
+    }
+
+
+# for a in range(4):
+#     for epsilon in np.arange(0, 0.16, 0.02):
+#         sucesso = 0
+#         for i in range(100):
+#             dist_d = Distribuicao(tipo="diamante", num_amostras=1000)
+#             algoritmo, args = get_algoritmo(dist_d, epsilon)[a]
+#             print(algoritmo.__name__, epsilon, i)
+
+#             vizinhanca = algoritmo(**args)
+#             grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+#             sucesso += valida_diamante(grafo)
+#         resultados[algoritmo.__name__][epsilon] = sucesso / 100
+#         print(resultados)
+
+# file = open("results/sucesso_epsilon.json", "wb")
+# pickle.dump(json.dumps(resultados), file)
+
+
+# dist_d = Distribuicao(tipo="grid", num_amostras=1000)
 # vizinhanca = greedy_fb(dist_d, 0.007, 0.9)
 # grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
 # pprint(grafo.__dict__)
