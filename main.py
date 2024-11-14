@@ -122,10 +122,10 @@ def get_resultado_diamante():
             for i in range(4):
                 dist_d = Distribuicao(tipo="diamante", num_amostras=num_amostras)
                 relacao_algoritmos = {
-                    0: (greedy, {"dist": dist_d, "non_d": 0.06}),
-                    1: (rec_greedy, {"dist": dist_d, "epsilon": 0.06}),
-                    2: (greedy_fb, {"dist": dist_d, "non_d": 0.06, "alpha": 0.9}),
-                    3: (greedyP, {"dist": dist_d, "epsilon": 0.06}),
+                    0: (greedy, {"dist": dist_d, "non_d": 0.008}),
+                    1: (rec_greedy, {"dist": dist_d, "epsilon": 0.008}),
+                    2: (greedy_fb, {"dist": dist_d, "non_d": 0.008, "alpha": 0.9}),
+                    3: (greedyP, {"dist": dist_d, "epsilon": 0.008}),
                 }
                 alg = relacao_algoritmos[i][0]
                 args = relacao_algoritmos[i][1]
