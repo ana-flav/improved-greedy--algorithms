@@ -68,20 +68,30 @@ def get_resultado_diamante():
     return resultados
 
 
-result_file = open("results/resultado_diamante.json", "rb")
-# result_file = open("results/resultado_diamante.json", "wb")
-resultados_json = json.loads(pickle.load(result_file))
-for alg, resultados in resultados_json.items():
-    for num_amostra, sucesso in resultados.items():
-        resultados_json[alg][num_amostra] = sucesso / 100
+def write_resultados_diamante():
+    result_file = open("results/resultado_diamante.json", "wb")
 
-print(resultados_json)
-# resultado = get_resultado_diamante()
-# pickle.dump(json.dumps(resultado), result_file)
+    resultado = get_resultado_diamante()
+    pickle.dump(json.dumps(resultado), result_file)
 
 
-# for n, s in resultados.items():
-#     print(f"{n} amostras: { s / 100}")
+def read_resultados_diamante():
+    result_file = open("results/resultado_diamante.json", "rb")
+    resultados_json = json.loads(pickle.load(result_file))
+    output = {
+        "greedy": defaultdict(int),
+        "rec_greedy": defaultdict(int),
+        "greedy_fb": defaultdict(int),
+        "greedyP": defaultdict(int),
+    }
+    for alg, resultados in resultados_json.items():
+        for num_amostra, sucesso in resultados.items():
+            output[alg][int(num_amostra)] = sucesso / 100
+
+    pprint(output)
+
+
+read_resultados_diamante()
 
 
 # dist_d = Distribuicao(tipo="grid", num_amostras=50)
