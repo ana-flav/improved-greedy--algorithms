@@ -21,10 +21,11 @@ class Grafo:
         arestas = []
         for no, vizinhanca in adjacencia.items():
             for vizinho in vizinhanca:
-                aresta = (no, vizinho)
-                aresta_reversa = aresta[::-1]
-                if aresta not in arestas and aresta_reversa not in arestas:
-                    arestas.append(aresta)
+                if no in adjacencia[vizinho] and vizinho in adjacencia[no]:
+                    aresta = (no, vizinho)
+                    aresta_reversa = aresta[::-1]
+                    if aresta not in arestas and aresta_reversa not in arestas:
+                        arestas.append(aresta)
 
         return arestas
 

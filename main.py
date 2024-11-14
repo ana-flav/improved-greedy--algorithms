@@ -37,6 +37,75 @@ def valida_diamante(grafo):
     return 1
 
 
+def vizinhos_grade_4x4(i):
+    posicoes = []
+    if i % 4 != 0:
+        posicoes.append(i - 1)
+    if (i + 1) % 4 != 0:
+        posicoes.append(i + 1)
+    if i - 4 >= 0:
+        posicoes.append(i - 4)
+    if i + 4 < 16:
+        posicoes.append(i + 4)
+    return posicoes
+
+
+def valida_grade(grafo: Grafo):
+    if not grafo.arestas:
+        return 0
+
+    for i in range(len(grafo.adjacencia)):
+        for vizinho in grafo.adjacencia[i]:
+            if vizinho not in vizinhos_grade_4x4(i):
+                return 0
+    return 1
+
+
+def get_resultado_grade():
+    resultados = {
+        "greedy": defaultdict(int),
+        "rec_greedy": defaultdict(int),
+        "greedy_fb": defaultdict(int),
+        "greedyP": defaultdict(int),
+    }
+
+    epsilon_amostra = {
+        1000: 0.08,
+        2000: 0.008,
+        3000: 0.005,
+        4000: 0.06,
+        5000: 0.08,
+        6000: 0.08,
+        7000: 0.08,
+        8000: 0.08,
+        9000: 0.08,
+        10000: 0.08,
+    }
+
+    for num_amostras in range(1000, 11000, 1000):
+        print(num_amostras)
+        for _ in range(100):
+            dist_d = Distribuicao(tipo="grid", num_amostras=num_amostras)
+            epsilon = epsilon_amostra[num_amostras]
+            relacao_algoritmos = {
+                0: (greedy, {"dist": dist_d, "non_d": epsilon}),
+                1: (rec_greedy, {"dist": dist_d, "epsilon": epsilon}),
+                2: (greedy_fb, {"dist": dist_d, "non_d": epsilon, "alpha": 0.9}),
+                3: (greedyP, {"dist": dist_d, "epsilon": epsilon}),
+            }
+
+            for i in range(4):
+                alg = relacao_algoritmos[i][0]
+                args = relacao_algoritmos[i][1]
+
+                vizinhanca = alg(**args)
+                resultados[alg.__name__][int(num_amostras)] += valida_grade(
+                    Grafo.get_instance_from_vizinhanca(vizinhanca)
+                )
+
+    return resultados
+
+
 def get_resultado_diamante():
     resultados = {
         "greedy": defaultdict(int),
@@ -91,13 +160,30 @@ def read_resultados_diamante():
     pprint(output)
 
 
-read_resultados_diamante()
+# read_resultados_diamante()
 
+num = 5000
+epsilon = 0.0009
+sucesso = 0
+print(num, epsilon)
+for i in range(100):
+    print(i)
 
-# dist_d = Distribuicao(tipo="grid", num_amostras=50)
-# vizinhanca = rec_greedy(dist_d, 0.13)
+    while True:
+        print('tentando dnv')
+        dist_d = Distribuicao(tipo="grid", num_amostras=num)
+        vizinhanca = greedy_fb(dist_d, epsilon, 0.9)
+        grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+        if grafo.arestas:
+            sucesso += valida_grade(grafo)
+            break
+
+print(num, epsilon)
+print(sucesso / 100)
+
+# dist_d = Distribuicao(tipo="grid", num_amostras=2000)
+# vizinhanca = greedy_fb(dist_d, 0.007, 0.9)
 # grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-
 # pprint(grafo.__dict__)
 # mean = np.mean(dist_d.amostras, axis=1)
 

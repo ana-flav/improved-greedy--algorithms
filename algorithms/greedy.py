@@ -36,7 +36,6 @@ def greedy(dist: Distribuicao, non_d: float):
 
             if menor_entropia < entropia_atual - non_d / 2:
                 vizinhanca[i].add(melhor_candidato)
-                vizinhanca[melhor_candidato].add(i)
             else:
                 break
 
