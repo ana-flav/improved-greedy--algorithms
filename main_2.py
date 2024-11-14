@@ -1,6 +1,6 @@
 import networkx as nx
 from greedy import greedy
-from utils import Distribuicao, Grafo
+from sample import Distribuicao, Grafo
 import matplotlib.pyplot as plt
 from pprint import pprint
 
