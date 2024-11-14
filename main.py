@@ -1,179 +1,125 @@
-import numpy as np
-import random
+from collections import defaultdict
+import json
+import pickle
+import networkx as nx
+from algorithms.greedy import greedy
+from algorithms.greedy_fb import greedy_fb
+from algorithms.greedy_p import greedyP
+from algorithms.rec_greedy import rec_greedy
+from sample import Distribuicao, Grafo
 import matplotlib.pyplot as plt
-from scipy.stats import entropy
-
-def cond_entropy(x, y):
-    x, y = np.asarray(x).flatten(), np.asarray(y).flatten()
-    if len(x) != len(y):
-        raise ValueError("x and y must be the same length.")
-    x_unique = len(np.unique(x))
-    y_unique = len(np.unique(y))
-    joint_xy = np.histogram2d(x, y, bins=[x_unique, y_unique])[0]
-    joint_xy = joint_xy / joint_xy.sum()  
-    x_marginal = joint_xy.sum(axis=1, keepdims=True)
-    return entropy(joint_xy.flatten(), base=2) - entropy(x_marginal.flatten(), base=2)
-
-def ising_gibbs_sample(n, m, theta, num_samples=1000):
-    samples = np.ones((num_samples, n * m))
-    for sample_idx in range(num_samples):
-        for _ in range(n * m):
-            i = random.randint(0, n * m - 1)
-            neighbors = []
-            if i % m > 0:
-                neighbors.append(samples[sample_idx, i - 1])
-            if i % m < m - 1:
-                neighbors.append(samples[sample_idx, i + 1])
-            if i >= m:
-                neighbors.append(samples[sample_idx, i - m])
-            if i < (n - 1) * m:
-                neighbors.append(samples[sample_idx, i + m])
-            field = np.sum(theta * np.array(neighbors))
-            prob = 1 / (1 + np.exp(-2 * field))
-            samples[sample_idx, i] = 1 if random.random() < prob else -1
-    return samples
+from pprint import pprint
 
 
+def plotar_grafo(vertices, arestas):
+    G = nx.Graph()
 
-def greedy_algorithm(samples, epsilon):
-    n_samples, n_variables = samples.shape
-    neighbors = {}
-    for i in range(n_variables):
-        neighbors[i] = set()
-        current_cond_entropy = entropy(np.histogram(samples[:, i], bins=len(np.unique(samples[:, i])))[0], base=2)
-        while True:
-            best_delta = -np.inf
-            best_node = None
-            for j in range(n_variables):
-                if j != i and j not in neighbors[i]:
-                    if len(neighbors[i]) > 0:
-                        neighbor_values = np.mean(samples[:, list(neighbors[i])], axis=1)
-                    else:
-                        neighbor_values = samples[:, j]
-                    delta_j = current_cond_entropy - cond_entropy(samples[:, i], neighbor_values)
-                    if delta_j >= epsilon and delta_j > best_delta:
-                        best_delta = delta_j
-                        best_node = j
+    G.add_nodes_from(vertices)
+    G.add_edges_from(arestas)
 
-            if best_node is not None:
-                neighbors[i].add(best_node)
-                current_cond_entropy -= best_delta
-            else:
-                break
-    return neighbors
+    plt.figure(figsize=(8, 6))
+    nx.draw(
+        G,
+        with_labels=True,
+        node_color="lightblue",
+        node_size=500,
+        font_size=15,
+        font_color="black",
+        edge_color="gray",
+    )
 
-def rec_greedy_algorithm(samples, epsilon):
-    n_samples, n_variables = samples.shape
-    neighbors = {}
-
-    def recursive_addition(i, current_neighbors, current_cond_entropy):
-        best_delta = -np.inf
-        best_node = None
-        for j in range(n_variables):
-            if j != i and j not in current_neighbors:
-                if len(current_neighbors) > 0:
-                    neighbor_values = np.mean(samples[:, list(current_neighbors)], axis=1)
-                else:
-                    neighbor_values = samples[:, j]
-                delta_j = current_cond_entropy - cond_entropy(samples[:, i], neighbor_values)
-                if delta_j >= epsilon and delta_j > best_delta:
-                    best_delta = delta_j
-                    best_node = j
-        if best_node is not None:
-            current_neighbors.add(best_node)
-            recursive_addition(i, current_neighbors, current_cond_entropy - best_delta)
-
-    for i in range(n_variables):
-        neighbors[i] = set()
-        initial_entropy = entropy(np.histogram(samples[:, i], bins=len(np.unique(samples[:, i])))[0], base=2)
-        recursive_addition(i, neighbors[i], initial_entropy)
-
-    return neighbors
-
-def fb_greedy_algorithm(samples, epsilon):
-    n_samples, n_variables = samples.shape
-    neighbors = {}
-
-    for i in range(n_variables):
-        neighbors[i] = set()
-        current_cond_entropy = entropy(np.histogram(samples[:, i], bins=len(np.unique(samples[:, i])))[0], base=2)
-        while True:
-            best_delta = -np.inf
-            best_node = None
-            for j in range(n_variables):
-                if j != i and j not in neighbors[i]:
-                    if len(neighbors[i]) > 0:
-                        neighbor_values = np.mean(samples[:, list(neighbors[i])], axis=1)
-                    else:
-                        neighbor_values = samples[:, j]
-                    delta_j = current_cond_entropy - cond_entropy(samples[:, i], neighbor_values)
-                    if delta_j >= epsilon and delta_j > best_delta:
-                        best_delta = delta_j
-                        best_node = j
-            if best_node is not None:
-                neighbors[i].add(best_node)
-                current_cond_entropy -= best_delta
-                # Removal step: attempt to remove nodes with minimal impact
-                for k in list(neighbors[i]):
-                    temp_neighbors = neighbors[i] - {k}
-                    temp_entropy = cond_entropy(samples[:, i], np.mean(samples[:, list(temp_neighbors)], axis=1))
-                    if current_cond_entropy - temp_entropy < epsilon:
-                        neighbors[i].remove(k)
-                        current_cond_entropy = temp_entropy
-            else:
-                break
-
-    return neighbors
-
-
-def greedy_p_algorithm(samples, epsilon):
-    neighbors = greedy_algorithm(samples, epsilon)
-    for i in neighbors:
-        for j in list(neighbors[i]):
-            temp_neighbors = neighbors[i] - {j}
-            if cond_entropy(samples[:, i], np.mean(samples[:, list(temp_neighbors)], axis=1)) > epsilon:
-                neighbors[i].remove(j)
-    return neighbors
-
-# Placeholder for RWL (Regularized Logistic Regression-based) algorithm
-def rwl_algorithm(samples, lambda_value):
-    neighbors = {}  
-    return neighbors
-
-def simulate_results_plot():
-    sample_sizes = [500, 1000, 2000, 3000, 4000, 5000]
-    probability_of_success_diamond = {
-        'D=2': [0.1, 0.5, 0.8, 0.9, 0.95, 0.99],
-        'D=3': [0.05, 0.4, 0.75, 0.85, 0.9, 0.95],
-        'D=4': [0.02, 0.3, 0.6, 0.8, 0.88, 0.9],
-    }
-    probability_of_success_4x4 = {
-        'RecGreedy': [0.2, 0.6, 0.85, 0.95, 0.98, 0.99],
-        'FbGreedy': [0.15, 0.55, 0.83, 0.93, 0.97, 0.99],
-        'GreedyP': [0.1, 0.5, 0.8, 0.92, 0.95, 0.98],
-        'Greedy': [0.05, 0.4, 0.7, 0.88, 0.92, 0.95],
-        'RWL': [0.25, 0.65, 0.9, 0.96, 0.99, 0.995]
-    }
-    
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 2, 1)
-    for label, probabilities in probability_of_success_diamond.items():
-        plt.plot(sample_sizes, probabilities, label=label, marker='o')
-    plt.title("Diamond Network - Theta = 0.25, Threshold Degree = 5")
-    plt.xlabel("Number of samples")
-    plt.ylabel("Probability of success")
-    plt.legend()
-    
-    plt.subplot(1, 2, 2)
-    for label, probabilities in probability_of_success_4x4.items():
-        plt.plot(sample_sizes, probabilities, label=label, marker='o')
-    plt.title("4x4 Grid, Max Degree = 4")
-    plt.xlabel("Number of samples")
-    plt.ylabel("Probability of success")
-    plt.legend()
-    
-    plt.tight_layout()
     plt.show()
 
-samples = ising_gibbs_sample(4, 4, 0.5)
-print(greedy_algorithm(samples, 0.06))
+
+def valida_diamante(grafo):
+    if (0, 5) in grafo.arestas or (5, 0) in grafo.arestas:
+        return 0
+    return 1
+
+
+def get_resultado_diamante():
+    resultados = {
+        "greedy": defaultdict(int),
+        "rec_greedy": defaultdict(int),
+        "greedy_fb": defaultdict(int),
+        "greedyP": defaultdict(int),
+    }
+
+    for num_amostras in range(100, 1100, 100):
+        print(num_amostras)
+        for _ in range(100):
+            dist_d = Distribuicao(tipo="diamante", num_amostras=num_amostras)
+            relacao_algoritmos = {
+                0: (greedy, {"dist": dist_d, "non_d": 0.06}),
+                1: (rec_greedy, {"dist": dist_d, "epsilon": 0.06}),
+                2: (greedy_fb, {"dist": dist_d, "non_d": 0.06, "alpha": 0.9}),
+                3: (greedyP, {"dist": dist_d, "epsilon": 0.06}),
+            }
+
+            for i in range(4):
+                alg = relacao_algoritmos[i][0]
+                args = relacao_algoritmos[i][1]
+
+                vizinhanca = alg(**args)
+                resultados[alg.__name__][int(num_amostras)] += valida_diamante(
+                    Grafo.get_instance_from_vizinhanca(vizinhanca)
+                )
+
+    return resultados
+
+
+result_file = open("results/resultado_diamante.json", "rb")
+# result_file = open("results/resultado_diamante.json", "wb")
+resultados_json = json.loads(pickle.load(result_file))
+for alg, resultados in resultados_json.items():
+    for num_amostra, sucesso in resultados.items():
+        resultados_json[alg][num_amostra] = sucesso / 100
+
+print(resultados_json)
+# resultado = get_resultado_diamante()
+# pickle.dump(json.dumps(resultado), result_file)
+
+
+# for n, s in resultados.items():
+#     print(f"{n} amostras: { s / 100}")
+
+
+# dist_d = Distribuicao(tipo="grid", num_amostras=50)
+# vizinhanca = rec_greedy(dist_d, 0.13)
+# grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+
+# pprint(grafo.__dict__)
+# mean = np.mean(dist_d.amostras, axis=1)
+
+# plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
+# plt.show()
+
+# dist_d = Distribuicao(tipo="grid", num_amostras=1)
+# grafo = dist_d._grafos[0]
+# plotar_grafo(grafo.vertices, grafo.arestas)
+# print(grafo.__dict__)
+
+# Parâmetros e configuração
+# dist_d = Distribuicao(tipo="grid", num_amostras=10000)
+# mean = np.mean(dist_d.amostras, axis=1)
+
+# Visualizar a distribuição dos dados
+# import matplotlib.pyplot as plt
+# plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
+# plt.show()
+
+# Lista de valores de epsilon para testar
+# epsilon_values = [0.00001, 0.00005, 0.0001, 0.001, 0.005]
+
+# Realizar a validação cruzada para encontrar o melhor epsilon
+# best_epsilon, best_score = cross_validate_non_d(dist_d, epsilon_values, k=5)
+# print(f"Melhor epsilon: {best_epsilon} com score médio: {best_score}")
+
+# Executar o algoritmo com o melhor epsilon encontrado
+# vizinhanca = greedy_algorithm_meu(dist_d, 0.0001)
+# mrf = Grafo.get_instance_from_vizinhanca(vizinhanca)
+# print("Vizinhança encontrada:", mrf.__dict__)
+
+# Após executar o algoritmo greedy
+# plotter = GraphPlotter(4, 4)
+# plotter.plot_graph_structure(estrutura, dados)
