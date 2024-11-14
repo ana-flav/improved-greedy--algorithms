@@ -18,7 +18,20 @@ def rec_greedy(dist: Distribuicao, epsilon: float):
             while not complete:
                 melhor_candidato = None
                 menor_entropia = np.inf
-                # aqui vem a selecao do no joota que minimiza a entropia e estara no conjunto T_i
+                
+                for k in variaveis:
+                    if k != i and k not in T_i:
+                        entropia_atual = empirical_cond_entropy(
+                            dist.amostras[:, i], [dist.amostras[:, v] for v in T_i] + [dist.amostras[:, k]]
+                        )
+                        if entropia_atual < menor_entropia:
+                            menor_entropia = entropia_atual
+                            melhor_candidato = k
+                            
+                if melhor_candidato is not None:
+                    entropia_sem_j = empirical_cond_entropy(
+                        dist.amostras[:, i], [dist.amostras[:, v] for v in T_i]
+                    )
                     if entropia_sem_j - menor_entropia >= epsilon / 2:
                         T_i.add(melhor_candidato)
                         last = melhor_candidato
