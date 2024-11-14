@@ -1,4 +1,4 @@
-from utils import Distribuicao
+from sample import Distribuicao
 
 
 # def greedy_fb(dist: Distribuicao, non_d: float, alpha: float):

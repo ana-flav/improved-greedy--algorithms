@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.model_selection import KFold
-from utils import Distribuicao, Grafo
+from sample import Distribuicao, Grafo
 from greedy import greedy_algorithm_meu
 
 def evaluate_algorithm(true_graph, estimated_graph):
