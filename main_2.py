@@ -1,6 +1,8 @@
 import os
 import networkx as nx
 from greedy import greedy
+from greedy_fb import greedy_fb
+from rec_greedy import rec_greedy
 from sample import Distribuicao, Grafo
 import matplotlib.pyplot as plt
 from pprint import pprint
@@ -25,14 +27,23 @@ def plotar_grafo(vertices, arestas):
     plt.show()
 
 
-while True:
-    dist_d = Distribuicao(tipo="grid", num_amostras=10000)
-    vizinhanca = greedy(dist_d, 0.0013)
-    grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-    if grafo.arestas:
-        break
-    os.system("clear")
+# while True:
+#     dist_d = Distribuicao(tipo="grid", num_amostras=10000)
+#     vizinhanca = greedy(dist_d, 0.0013)
+#     grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+#     if grafo.arestas:
+#         break
 
+# while True:
+# dist_d = Distribuicao(tipo="grid", num_amostras=1000)
+# vizinhanca = greedy_fb(dist_d, 0.01, 0.9)
+# grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+    # if grafo.arestas:
+    #     break
+
+dist_d = Distribuicao(tipo="grid", num_amostras=1000)
+vizinhanca = rec_greedy(dist_d, 0.008) 
+grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
 
 pprint(grafo.__dict__)
 # mean = np.mean(dist_d.amostras, axis=1)
