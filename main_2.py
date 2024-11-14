@@ -1,3 +1,4 @@
+import os
 import networkx as nx
 from greedy import greedy
 from utils import Distribuicao, Grafo
@@ -24,11 +25,13 @@ def plotar_grafo(vertices, arestas):
     plt.show()
 
 
-dist_d = Distribuicao(tipo="grid", num_amostras=10000)
-
-
-vizinhanca = greedy(dist_d, 0.0004)
-grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+while True:
+    dist_d = Distribuicao(tipo="grid", num_amostras=10000)
+    vizinhanca = greedy(dist_d, 0.0013)
+    grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+    if grafo.arestas:
+        break
+    os.system("clear")
 
 
 pprint(grafo.__dict__)
@@ -39,7 +42,7 @@ pprint(grafo.__dict__)
 
 # dist_d = Distribuicao(tipo="grid", num_amostras=1)
 # grafo = dist_d._grafos[0]
-plotar_grafo(grafo.vertices, grafo.arestas)
+# plotar_grafo(grafo.vertices, grafo.arestas)
 # print(grafo.__dict__)
 
 # Parâmetros e configuração

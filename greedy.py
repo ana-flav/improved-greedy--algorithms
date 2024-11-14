@@ -3,10 +3,9 @@ import math
 import numpy as np
 from utils import Distribuicao
 
-
 def formata(listao):
     pares = []
-    for linha in listao[0]:
+    for linha in range(len(listao[0])):
         pares.append([l[linha] for l in listao])
     return pares
 
@@ -18,6 +17,9 @@ def empirical_cond_entropy(X, Y=[]):
 
         prob = [count[val] / n for val in count]
         return -sum(p * math.log2(p) for p in prob if p > 0)
+
+    if len(Y) > 1:
+        Y = formata(Y)
 
     X = np.array(X)
 
@@ -59,18 +61,9 @@ def get_min_j(
 
     for j in variaveis:
         if j != i and j not in vizinhanca_i:
-            if len(vizinhanca_i) >= 1:
-                lista_input = formata(
-                    [dist.amostras[:, v] for v in vizinhanca_i] + [dist.amostras[:, j]]
-                )
-            else:
-                lista_input = [dist.amostras[:, v] for v in vizinhanca_i] + [
-                    dist.amostras[:, j]
-                ]
-
             entropia_j = empirical_cond_entropy(
                 dist.amostras[:, i],
-                lista_input,
+                [dist.amostras[:, v] for v in vizinhanca_i] + [dist.amostras[:, j]],
             )
 
             if entropia_j < menor_entropia:
@@ -82,13 +75,10 @@ def get_min_j(
 
 def greedy(dist: Distribuicao, non_d: float):
     variaveis = list(range(dist.tamanho))
-    vizinhanca = {}
+    vizinhanca = {i: set() for i in variaveis}
 
     for i in variaveis:
-        vizinhanca[i] = set()
-
         while True:
-
             entropia_atual = empirical_cond_entropy(
                 dist.amostras[:, i], [dist.amostras[:, v] for v in vizinhanca[i]]
             )
@@ -97,10 +87,8 @@ def greedy(dist: Distribuicao, non_d: float):
             )
 
             if menor_entropia < entropia_atual - non_d / 2:
-                print(
-                    f"({i}, {melhor_candidato}): {entropia_atual} - {menor_entropia} = {entropia_atual - menor_entropia}"
-                )
                 vizinhanca[i].add(melhor_candidato)
+                vizinhanca[melhor_candidato].add(i)
             else:
                 break
 
