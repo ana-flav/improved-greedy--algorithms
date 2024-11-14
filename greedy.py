@@ -31,7 +31,7 @@ def greedy(dist: Distribuicao, non_d: float):
                 dist.amostras[:, i], [dist.amostras[:, v] for v in vizinhanca[i]]
             )
             melhor_candidato, menor_entropia = get_min_j(
-                i, variaveis, dist, vizinhanca[i], non_d
+                i, variaveis, dist, vizinhanca[i]
             )
 
             if menor_entropia < entropia_atual - non_d / 2:
