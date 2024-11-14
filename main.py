@@ -10,7 +10,9 @@ from algorithms.rec_greedy import rec_greedy
 from sample import Distribuicao, Grafo
 import matplotlib.pyplot as plt
 from pprint import pprint
+from datetime import datetime
 
+import pandas as pd
 
 def plotar_grafo(vertices, arestas):
     G = nx.Graph()
@@ -134,6 +136,58 @@ def get_resultado_diamante():
 
     return resultados
 
+def tempo_execucao():
+    resultados = {
+        "greedy": defaultdict(int),
+        "rec_greedy": defaultdict(int),
+        "greedy_fb": defaultdict(int),
+        "greedyP": defaultdict(int),
+    }
+
+    epsilon_amostra = {
+        1000: 0.08,
+        2000: 0.008,
+        3000: 0.005,
+        4000: 0.06,
+    }
+
+    # Dicionário para armazenar os tempos
+    tempos_execucao = {
+        "greedy": [],
+        "rec_greedy": [],
+        "greedy_fb": [],
+        "greedyP": [],
+    }
+
+    for num_amostras in range(1000, 5000, 1000):
+        dist_d = Distribuicao(tipo="grid", num_amostras=num_amostras)
+        epsilon = epsilon_amostra[num_amostras]
+        relacao_algoritmos = {
+            0: (greedy, {"dist": dist_d, "non_d": epsilon}),
+            1: (rec_greedy, {"dist": dist_d, "epsilon": epsilon}),
+            2: (greedy_fb, {"dist": dist_d, "non_d": epsilon, "alpha": 0.9}),
+            3: (greedyP, {"dist": dist_d, "epsilon": epsilon}),
+        }
+
+        for i in range(4):
+            alg = relacao_algoritmos[i][0]
+            args = relacao_algoritmos[i][1]
+
+            while True:
+                inicio_tempo = datetime.now()
+                vizinhanca = alg(**args)
+                tempo_exec = datetime.now() - inicio_tempo
+                grado = Grafo.get_instance_from_vizinhanca(vizinhanca)
+                print("morte")
+                if grado.arestas:
+                    break
+
+            resultados[alg.__name__][int(num_amostras)] += tempo_exec.total_seconds()
+            # print(tempo_exec.total_seconds())
+            tempos_execucao[alg.__name__].append(tempo_exec.total_seconds())
+
+    return resultados
+
 
 def write_resultados_diamante():
     result_file = open("results/resultado_diamante.json", "wb")
@@ -176,9 +230,29 @@ for i in range(100):
         if grafo.arestas:
             sucesso += valida_grade(grafo)
             break
+        
+def plotar_tempos_execucao():
+    tempos = tempo_execucao()
+    df_tempos = pd.DataFrame(tempos)
 
-print(num, epsilon)
-print(sucesso / 100)
+    plt.figure(figsize=(10, 6))
+
+    # breakpoint()
+    for alg in df_tempos:
+
+        plt.plot(df_tempos.index, df_tempos[alg], label=alg, marker='o')
+
+    plt.title("Tempo de Execução dos Algoritmos por Número de Amostras")
+    plt.xlabel("Número de Amostras")
+    plt.ylabel("Tempo de Execução (segundos)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+plotar_tempos_execucao()
+
+
 
 # resultados = {
 #     "greedy": {},
