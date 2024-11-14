@@ -14,6 +14,7 @@ from datetime import datetime
 
 import pandas as pd
 
+
 def plotar_grafo(vertices, arestas):
     G = nx.Graph()
 
@@ -75,16 +76,17 @@ def get_resultado_grade():
     }
 
     epsilon_amostra = {
-        1000: 0.08,
-        2000: 0.008,
+        1000: 0.04,
+        2000: 0.005,
         3000: 0.005,
-        4000: 0.06,
+        4000: 0.004,
         5000: 0.002,
     }
 
     for num_amostras in range(1000, 6000, 1000):
         print(num_amostras)
-        for _ in range(100):
+        for i in range(20):
+            print(i)
             dist_d = Distribuicao(tipo="grid", num_amostras=num_amostras)
             epsilon = epsilon_amostra[num_amostras]
             relacao_algoritmos = {
@@ -117,15 +119,14 @@ def get_resultado_diamante():
     for num_amostras in range(100, 1100, 100):
         print(num_amostras)
         for _ in range(100):
-            dist_d = Distribuicao(tipo="diamante", num_amostras=num_amostras)
-            relacao_algoritmos = {
-                0: (greedy, {"dist": dist_d, "non_d": 0.06}),
-                1: (rec_greedy, {"dist": dist_d, "epsilon": 0.06}),
-                2: (greedy_fb, {"dist": dist_d, "non_d": 0.06, "alpha": 0.9}),
-                3: (greedyP, {"dist": dist_d, "epsilon": 0.06}),
-            }
-
             for i in range(4):
+                dist_d = Distribuicao(tipo="diamante", num_amostras=num_amostras)
+                relacao_algoritmos = {
+                    0: (greedy, {"dist": dist_d, "non_d": 0.06}),
+                    1: (rec_greedy, {"dist": dist_d, "epsilon": 0.06}),
+                    2: (greedy_fb, {"dist": dist_d, "non_d": 0.06, "alpha": 0.9}),
+                    3: (greedyP, {"dist": dist_d, "epsilon": 0.06}),
+                }
                 alg = relacao_algoritmos[i][0]
                 args = relacao_algoritmos[i][1]
 
@@ -135,6 +136,7 @@ def get_resultado_diamante():
                 )
 
     return resultados
+
 
 def tempo_execucao():
     resultados = {
@@ -149,6 +151,7 @@ def tempo_execucao():
         2000: 0.008,
         3000: 0.005,
         4000: 0.06,
+        5000: 0.002,
     }
 
     # Dicionário para armazenar os tempos
@@ -159,7 +162,7 @@ def tempo_execucao():
         "greedyP": [],
     }
 
-    for num_amostras in range(1000, 5000, 1000):
+    for num_amostras in range(1000, 6000, 1000):
         dist_d = Distribuicao(tipo="grid", num_amostras=num_amostras)
         epsilon = epsilon_amostra[num_amostras]
         relacao_algoritmos = {
@@ -197,22 +200,38 @@ def write_resultados_diamante():
 
 
 def read_resultados_diamante():
-    result_file = open("results/resultado_diamante.json", "rb")
-    resultados_json = json.loads(pickle.load(result_file))
+    resultado = get_resultado_diamante()
     output = {
         "greedy": defaultdict(int),
         "rec_greedy": defaultdict(int),
         "greedy_fb": defaultdict(int),
         "greedyP": defaultdict(int),
     }
-    for alg, resultados in resultados_json.items():
+    for alg, resultados in resultado.items():
         for num_amostra, sucesso in resultados.items():
             output[alg][int(num_amostra)] = sucesso / 100
 
-    pprint(output)
+    return output
 
 
-# read_resultados_diamante()
+output = read_resultados_diamante()
+def tet():
+    num = 5000
+    epsilon = 0.001
+    sucesso = 0
+    print(num, epsilon)
+    for i in range(100):
+        print(i)
+
+        tentativas = 1
+        while True:
+            print("tentando dnv")
+            dist_d = Distribuicao(tipo="grid", num_amostras=num)
+            vizinhanca = greedy(dist_d, epsilon)
+            grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+            if grafo.arestas:
+                sucesso += valida_grade(grafo)
+                break
 
 # num = 5000
 # epsilon = 0.002
@@ -240,7 +259,7 @@ def plotar_tempos_execucao():
     # breakpoint()
     for alg in df_tempos:
 
-        plt.plot(df_tempos.index, df_tempos[alg], label=alg, marker='o')
+        plt.plot(df_tempos.index, df_tempos[alg], label=alg, marker="o")
 
     plt.title("Tempo de Execução dos Algoritmos por Número de Amostras")
     plt.xlabel("Número de Amostras")
@@ -250,7 +269,26 @@ def plotar_tempos_execucao():
     plt.show()
 
 
-plotar_tempos_execucao()
+def plotar_taxa_sucesso(res):
+    # res = read_resultados_diamante()
+    df_sucesso = pd.DataFrame(res)
+
+    plt.figure(figsize=(10, 6))
+    for alg in df_sucesso:
+        plt.plot(df_sucesso.index, df_sucesso[alg], label=alg, marker="o")
+
+    plt.title("Tempo de Execução dos Algoritmos por Número de Amostras")
+    plt.xlabel("Número de Amostras")
+    plt.ylabel("Tempo de Execução (segundos)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+# plotar_tempos_execucao()
+# plotar_taxa_sucesso()
+# write_resultados_diamante()        
+plotar_taxa_sucesso(output)
 
 
 
