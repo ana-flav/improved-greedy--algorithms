@@ -186,7 +186,6 @@ def tempo_execucao():
                     break
 
             resultados[alg.__name__][int(num_amostras)] += tempo_exec.total_seconds()
-            # print(tempo_exec.total_seconds())
             tempos_execucao[alg.__name__].append(tempo_exec.total_seconds())
 
     return resultados
@@ -213,42 +212,6 @@ def read_resultados_diamante():
 
     return output
 
-
-output = read_resultados_diamante()
-def tet():
-    num = 5000
-    epsilon = 0.001
-    sucesso = 0
-    print(num, epsilon)
-    for i in range(100):
-        print(i)
-
-        tentativas = 1
-        while True:
-            print("tentando dnv")
-            dist_d = Distribuicao(tipo="grid", num_amostras=num)
-            vizinhanca = greedy(dist_d, epsilon)
-            grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-            if grafo.arestas:
-                sucesso += valida_grade(grafo)
-                break
-
-# num = 5000
-# epsilon = 0.002
-# sucesso = 0
-# print(num, epsilon)
-# for i in range(100):
-#     print(i)
-
-#     tentativas = 1
-#     while True:
-#         print("tentando dnv")
-#         dist_d = Distribuicao(tipo="grid", num_amostras=num)
-#         vizinhanca = greedy(dist_d, epsilon)
-#         grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-#         if grafo.arestas:
-#             sucesso += valida_grade(grafo)
-#             break
         
 def plotar_tempos_execucao():
     tempos = tempo_execucao()
@@ -285,21 +248,6 @@ def plotar_taxa_sucesso(res):
     plt.show()
 
 
-# plotar_tempos_execucao()
-# plotar_taxa_sucesso()
-# write_resultados_diamante()        
-plotar_taxa_sucesso(output)
-
-
-
-# resultados = {
-#     "greedy": {},
-#     "rec_greedy": {},
-#     "greedy_fb": {},
-#     "greedyP": {},
-# }
-
-
 def get_algoritmo(dist, epsilon):
     return {
         0: (greedy, {"dist": dist, "non_d": epsilon}),
@@ -308,60 +256,18 @@ def get_algoritmo(dist, epsilon):
         3: (greedyP, {"dist": dist, "epsilon": epsilon}),
     }
 
-
-# for a in range(4):
-#     for epsilon in np.arange(0, 0.16, 0.02):
-#         sucesso = 0
-#         for i in range(100):
-#             dist_d = Distribuicao(tipo="diamante", num_amostras=1000)
-#             algoritmo, args = get_algoritmo(dist_d, epsilon)[a]
-#             print(algoritmo.__name__, epsilon, i)
-
-#             vizinhanca = algoritmo(**args)
-#             grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-#             sucesso += valida_diamante(grafo)
-#         resultados[algoritmo.__name__][epsilon] = sucesso / 100
-#         print(resultados)
-
-# file = open("results/sucesso_epsilon.json", "wb")
-# pickle.dump(json.dumps(resultados), file)
-
-
-# dist_d = Distribuicao(tipo="grid", num_amostras=1000)
-# vizinhanca = greedy_fb(dist_d, 0.007, 0.9)
-# grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
-# pprint(grafo.__dict__)
-# mean = np.mean(dist_d.amostras, axis=1)
-
-# plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
-# plt.show()
-
-# dist_d = Distribuicao(tipo="grid", num_amostras=1)
-# grafo = dist_d._grafos[0]
-# plotar_grafo(grafo.vertices, grafo.arestas)
-# print(grafo.__dict__)
-
-# Parâmetros e configuração
-# dist_d = Distribuicao(tipo="grid", num_amostras=10000)
-# mean = np.mean(dist_d.amostras, axis=1)
-
-# Visualizar a distribuição dos dados
-# import matplotlib.pyplot as plt
-# plt.hist(mean, bins=20, density=True, alpha=0.7, color="blue")
-# plt.show()
-
-# Lista de valores de epsilon para testar
-# epsilon_values = [0.00001, 0.00005, 0.0001, 0.001, 0.005]
-
-# Realizar a validação cruzada para encontrar o melhor epsilon
-# best_epsilon, best_score = cross_validate_non_d(dist_d, epsilon_values, k=5)
-# print(f"Melhor epsilon: {best_epsilon} com score médio: {best_score}")
-
-# Executar o algoritmo com o melhor epsilon encontrado
-# vizinhanca = greedy_algorithm_meu(dist_d, 0.0001)
-# mrf = Grafo.get_instance_from_vizinhanca(vizinhanca)
-# print("Vizinhança encontrada:", mrf.__dict__)
-
-# Após executar o algoritmo greedy
-# plotter = GraphPlotter(4, 4)
-# plotter.plot_graph_structure(estrutura, dados)
+tipo = "grid"
+while True:
+    epsilon = 0.007 if tipo == "grid" else 0.06
+    dist = Distribuicao(tipo=tipo, num_amostras=1000)
+    # dist = Distribuicao(tipo="diamante", num_amostras=100)
+    
+    # vizinhanca = greedy_fb(dist, 0.06, 0.9)
+    # vizinhanca = rec_greedy(dist, 0.06)
+    vizinhanca = greedyP(dist, 0.007)
+    
+    grafo = Grafo.get_instance_from_vizinhanca(vizinhanca)
+    if grafo.arestas:
+        break
+    
+plotar_grafo(grafo.vertices, grafo.arestas)
